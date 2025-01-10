@@ -259,29 +259,28 @@
         <!-- Section pour afficher les avis validés -->
         <div id="reviews" style="display: flex; flex-direction: column; gap: 15px; overflow: hidden; padding: 10px;">
             <?php
-            // Inclusion de la configuration de la base de données
-            include 'config/config.php';
+            // Inclusion de la configuration MongoDB
+            include 'config/config_nosql.php';
 
             try {
                 // Requête pour récupérer les avis validés
-                $stmt = $pdo->prepare("SELECT visitor_name, review FROM reviews WHERE is_validated = 1 ORDER BY created_at DESC");
-                $stmt->execute();
-                $reviews = $stmt->fetchAll();
+                $cursor = $collection->find(
+                    ['is_validated' => 1], // Filtre : uniquement les avis validés
+                    ['sort' => ['created_at' => -1]] // Trier par date décroissante
+                );
 
                 // Affichage des avis validés avec des attributs data-index pour gérer l'animation
-                foreach ($reviews as $index => $review) {
+                foreach (iterator_to_array($cursor) as $index => $review) {
                     echo '<div class="review" style="padding: 10px; border-bottom: 1px solid #ccc; font-size: 16px; opacity: 0; display: none;" data-index="' . $index . '">';
                     echo '<h5><u style="color: #009BC5;">' . htmlspecialchars($review['visitor_name']) . '</u></h5>';
                     echo '<p><h5 style="color: #9600FF; font-family: \'Dancing Script\', cursive;">' . nl2br(htmlspecialchars($review['review'])) . '</h5></p>';
                     echo '</div>';
                 }
-
-            } catch (PDOException $e) {
+            } catch (Exception $e) {
                 echo "Erreur : " . $e->getMessage();
             }
             ?>
         </div>
-
         <!-- Formulaire pour ajouter un avis -->
         <h5>Donnez votre avis</h5>
         <form id="reviewForm">
@@ -300,6 +299,7 @@
         </form>
     </div>
 </div>
+
 
 <script>
     window.addEventListener("DOMContentLoaded", function () {
